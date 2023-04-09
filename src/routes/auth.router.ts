@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
-import type { Request, Response } from 'express'
+import type { Request, Response, NextFunction } from 'express'
 import express from 'express'
 import bcrypt from 'bcrypt'
 import * as jose from 'jose'
@@ -10,7 +10,7 @@ import { JWT_SECRET } from '../config'
 const router = express.Router()
 const prisma = new PrismaClient()
 
-router.post('/signup', async (req: Request, res: Response) => {
+router.post('/signup', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = signupSchema.parse(req.body)
     const passwordHash = await bcrypt.hash(data.password, 8)
@@ -25,8 +25,7 @@ router.post('/signup', async (req: Request, res: Response) => {
 
     res.status(201).json({ token })
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Something whent wrong.' })
+    next(error)
   }
 })
 
