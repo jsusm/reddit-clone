@@ -26,7 +26,7 @@ router.post('/signup', async (req: Request, res: Response) => {
     res.status(201).json({ token })
   } catch (error) {
     console.error(error)
-    res.status(500).send('Something whent wrong.')
+    res.status(500).json({ error: 'Something whent wrong.' })
   }
 })
 

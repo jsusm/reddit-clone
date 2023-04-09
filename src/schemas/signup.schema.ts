@@ -5,3 +5,5 @@ export const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(256)
 })
+
+export type SingupSchema = z.infer<typeof signupSchema>
