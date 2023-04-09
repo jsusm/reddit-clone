@@ -7,6 +7,7 @@ export function zodErrorMiddleware (error: Error, req: Request, res: Response, n
     res
       .status(400)
       .json({ error: zodErrorFormat(error) })
+    return
   }
   next(error)
 }
