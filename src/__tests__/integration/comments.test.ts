@@ -2,11 +2,8 @@ import request from 'supertest'
 import app from '../../app'
 import { type User, type Post, PrismaClient } from '@prisma/client'
 import { type z } from 'zod'
-import {
-  type updatePostSchema,
-  type createPostSchema
-} from '../../schemas/posts.schema'
 import { createJWT } from '../../lib/createJWT'
+import { createCommentSchema } from '../../schemas/comments.schema'
 
 const prisma = new PrismaClient()
 
@@ -33,55 +30,33 @@ beforeAll(async () => {
 })
 afterAll(async () => {
   await prisma.$transaction([
+    prisma.comment.deleteMany(),
     prisma.post.deleteMany(),
-    prisma.user.deleteMany()
+    prisma.user.deleteMany(),
   ])
 })
 
-describe('GET /posts', () => {
-  it('Should return a list of posts', async () => {
-    const res = await request(app)
-      .get('/api/v1/posts')
-      .set('Accept', 'application/json')
-      .expect('Content-Type', /json/)
-      .expect(200)
-    expect(res.body instanceof Array).toBe(true)
-  })
-})
-
-describe('GET /posts/:id', () => {
-  describe('Given an existent id', () => {
-    it('Should return a post instance', async () => {
+describe('GET /posts/:id/comments', () => {
+  describe('Guiven an existent id', () => {
+    it("Should return a list of comments", async () => {
       const res = await request(app)
-        .get(`/api/v1/posts/${dummyPost.id}`)
+        .get(`/api/v1/posts/${dummyPost.id}/comments`)
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
-      expect(res.body).toBeDefined()
-    })
-  })
-  describe('Given a non-existent id', () => {
-    it('Should return a 404 not found', async () => {
-      const res = await request(app)
-        .get('/api/v1/posts/100000')
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(404)
-      expect(res.body).toHaveProperty('error')
+      expect(res.body instanceof Array).toBe(true)
     })
   })
 })
 
-
-describe('POST /posts/', () => {
+describe('POST /posts/:id/comments', () => {
   describe('Given a valid payload', () => {
-    it('Should return a post instance', async () => {
-      const payload: z.infer<typeof createPostSchema> = {
-        title: 'TestPost',
-        content: 'Post created for tests purposes'
+    it('Should return a comment instance', async () => {
+      const payload: z.infer<typeof createCommentSchema> = {
+        content: 'TestComment',
       }
       const res = await request(app)
-        .post('/api/v1/posts')
+        .post(`/api/v1/posts/${dummyPost.id}/comments`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .send(payload)
@@ -94,7 +69,7 @@ describe('POST /posts/', () => {
     it('Should return a 400 Bad Request', async () => {
       const payload = {}
       const res = await request(app)
-        .post('/api/v1/posts')
+        .post(`/api/v1/posts/${dummyPost.id}/comments`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .send(payload)
@@ -103,33 +78,13 @@ describe('POST /posts/', () => {
       expect(res.body).toHaveProperty('error')
     })
   })
-})
-
-describe('PATCH /posts/', () => {
-  describe('Given an existent id and a valid payload', () => {
-    it('Should return an updated post instance', async () => {
-      const updatedTitle = 'Updated Test Post'
-      const payload: z.infer<typeof updatePostSchema> = {
-        title: updatedTitle
-      }
-      const res = await request(app)
-        .patch(`/api/v1/posts/${dummyPost.id}`)
-        .set('Accept', 'application/json')
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload)
-        .expect('Content-Type', /json/)
-        .expect(200)
-      expect(res.body).toHaveProperty('title', updatedTitle)
-    })
-  })
-  describe('Given an non-existent id and a valid payload', () => {
+  describe('Given an non-existent post id payload', () => {
     it('Should return a 404 Not Found', async () => {
-      const updatedTitle = 'Updated Test Post'
-      const payload: z.infer<typeof updatePostSchema> = {
-        title: updatedTitle
+      const payload: z.infer<typeof createCommentSchema> = {
+        content: 'TestComment',
       }
       const res = await request(app)
-        .patch('/api/v1/posts/100000')
+        .post(`/api/v1/posts/1000000/comments`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .send(payload)
@@ -138,16 +93,61 @@ describe('PATCH /posts/', () => {
       expect(res.body).toHaveProperty('error')
     })
   })
-  describe("Try to update a post that signed user don't own", () => {
+})
+
+describe('PATCH /comments/:id', () => {
+  describe('Given a valid payload', () => {
+    it('Should return an updated instance', async () => {
+      const comment = await prisma.comment.create({
+        data: {
+          content: 'TestComment',
+          postId: dummyPost.id,
+          authorId: author.id
+        }
+      })
+      const payload: z.infer<typeof createCommentSchema> = {
+        content: 'TestCommentUpdated',
+      }
+      const res = await request(app)
+        .patch(`/api/v1/comments/${comment.id}`)
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload)
+        .expect('Content-Type', /json/)
+        .expect(200)
+      expect(res.body).toHaveProperty('content', 'TestCommentUpdated')
+    })
+  })
+  describe('Given an non-existent id', () => {
+    it('Should return a 404 Not Found', async () => {
+      const payload = {}
+      const res = await request(app)
+        .patch(`/api/v1/comments/1000000`)
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload)
+        .expect('Content-Type', /json/)
+        .expect(404)
+      expect(res.body).toHaveProperty('error')
+    })
+  })
+  describe("Try to update a comment that signed user don't own", () => {
     it('Should return a 401 Unauthorized', async () => {
       const user = await prisma.user.create({
         data: { email: 'post_user1@test.com', password: 'randompassword' }
       })
-      const anotherUserPost = await prisma.post.create({
-        data: { title: 'Test Post', content: '', authorId: user.id }
+      const post = await prisma.post.create({
+        data: { title: 'CommentTestPost', content: '', authorId: user.id }
+      })
+      const anotherUserComment = await prisma.comment.create({
+        data: {
+          content: 'TestComment',
+          authorId: user.id,
+          postId: post.id,
+        }
       })
       const res = await request(app)
-        .patch(`/api/v1/posts/${anotherUserPost.id}`)
+        .patch(`/api/v1/comments/${anotherUserComment.id}`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .expect('Content-Type', /json/)
@@ -157,39 +157,51 @@ describe('PATCH /posts/', () => {
   })
 })
 
-describe('DELETE /posts/', () => {
-  describe('Given an existent id', () => {
+describe('DELETE /comments/:id', () => {
+  describe('Given a existent id', () => {
     it('Should return a 200 Ok', async () => {
-      const postToDelete = await prisma.post.create({
-        data: { title: '', content: '', authorId: author.id }
+      const commentToDelete = await prisma.comment.create({
+        data: {
+          content: '',
+          authorId: author.id,
+          postId: dummyPost.id,
+        }
       })
       await request(app)
-        .delete(`/api/v1/posts/${postToDelete.id}`)
+        .delete(`/api/v1/comments/${commentToDelete.id}`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .expect(200)
     })
   })
-  describe('Given an non-existent id', () => {
+  describe('Given a non-existent id', () => {
     it('Should return a 404 Not Found', async () => {
-      await request(app)
-        .delete('/api/v1/posts/100000')
+      const res = await request(app)
+        .delete(`/api/v1/comments/1000000`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .expect('Content-Type', /json/)
         .expect(404)
+      expect(res.body).toHaveProperty('error')
     })
   })
-  describe("Try to update a post that signed user don't own", () => {
+  describe('Try to delete a comment that signed user don\'t own', () => {
     it('Should return a 401 Unauthorized', async () => {
       const user = await prisma.user.create({
         data: { email: 'post_user2@test.com', password: 'randompassword' }
       })
-      const anotherUserPost = await prisma.post.create({
-        data: { title: 'Test Post', content: '', authorId: user.id }
+      const post = await prisma.post.create({
+        data: { title: 'CommentTestPost', content: '', authorId: user.id }
+      })
+      const anotherUserComment = await prisma.comment.create({
+        data: {
+          content: 'TestComment',
+          authorId: user.id,
+          postId: post.id,
+        }
       })
       const res = await request(app)
-        .delete(`/api/v1/posts/${anotherUserPost.id}`)
+        .delete(`/api/v1/comments/${anotherUserComment.id}`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .expect('Content-Type', /json/)

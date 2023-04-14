@@ -2,12 +2,13 @@
 import { PrismaClient } from '@prisma/client'
 import type { NextFunction, Request, Response } from 'express'
 import express from 'express'
+import { isAuthenticated } from '../middlewares/isAuthenticated.middleware'
+import { createCommentSchema } from '../schemas/comments.schema'
 import {
   createPostSchema,
   findParamsSchema,
   updatePostSchema
 } from '../schemas/posts.schema'
-import { isAuthenticated } from '../middlewares/isAuthenticated.middleware'
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -31,6 +32,13 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     const post = await prisma.post.findUnique({
       where: {
         id: params.id
+      },
+      include: {
+        comments: {
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
       }
     })
     if (post == null) {
@@ -38,6 +46,20 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
       return
     }
     res.status(200).json(post)
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.get('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const params = findParamsSchema.parse(req.params)
+    const comments = await prisma.comment.findMany({
+      where: {
+        postId: params.id
+      }
+    })
+    res.status(200).json(comments)
   } catch (error) {
     next(error)
   }
@@ -58,6 +80,37 @@ router.post(
         data: { ...data, authorId: userId }
       })
       res.status(201).json(post)
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+router.post(
+  '/:id/comments',
+  isAuthenticated,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = res.locals.userId
+    if (userId === undefined || typeof userId !== 'number') {
+      res.sendStatus(401)
+      return
+    }
+    try {
+      const params = findParamsSchema.parse(req.params)
+      const data = createCommentSchema.parse(req.body)
+      const post = await prisma.post.findUnique({ where: { id: params.id } })
+      if (post === null) {
+        res.status(404).json({ error: `Post with id ${params.id} doesn't exist` })
+        return
+      }
+      const comment = await prisma.comment.create({
+        data: {
+          ...data,
+          postId: post.id,
+          authorId: userId,
+        }
+      })
+      res.status(201).json(comment)
     } catch (error) {
       next(error)
     }
