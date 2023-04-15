@@ -72,7 +72,6 @@ describe('GET /posts/:id', () => {
   })
 })
 
-
 describe('POST /posts/', () => {
   describe('Given a valid payload', () => {
     it('Should return a post instance', async () => {

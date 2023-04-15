@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { PrismaClient } from '@prisma/client'
 import type { NextFunction, Request, Response } from 'express'
 import express from 'express'
@@ -73,6 +74,5 @@ router.delete('/:id', isAuthenticated, async (req: Request, res: Response, next:
     next(error)
   }
 })
-
 
 export default router

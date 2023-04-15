@@ -107,7 +107,7 @@ router.post(
         data: {
           ...data,
           postId: post.id,
-          authorId: userId,
+          authorId: userId
         }
       })
       res.status(201).json(comment)

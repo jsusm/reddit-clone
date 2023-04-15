@@ -3,7 +3,7 @@ import app from '../../app'
 import { type User, type Post, PrismaClient } from '@prisma/client'
 import { type z } from 'zod'
 import { createJWT } from '../../lib/createJWT'
-import { createCommentSchema } from '../../schemas/comments.schema'
+import { type createCommentSchema } from '../../schemas/comments.schema'
 
 const prisma = new PrismaClient()
 
@@ -32,13 +32,13 @@ afterAll(async () => {
   await prisma.$transaction([
     prisma.comment.deleteMany(),
     prisma.post.deleteMany(),
-    prisma.user.deleteMany(),
+    prisma.user.deleteMany()
   ])
 })
 
 describe('GET /posts/:id/comments', () => {
   describe('Guiven an existent id', () => {
-    it("Should return a list of comments", async () => {
+    it('Should return a list of comments', async () => {
       const res = await request(app)
         .get(`/api/v1/posts/${dummyPost.id}/comments`)
         .set('Accept', 'application/json')
@@ -53,7 +53,7 @@ describe('POST /posts/:id/comments', () => {
   describe('Given a valid payload', () => {
     it('Should return a comment instance', async () => {
       const payload: z.infer<typeof createCommentSchema> = {
-        content: 'TestComment',
+        content: 'TestComment'
       }
       const res = await request(app)
         .post(`/api/v1/posts/${dummyPost.id}/comments`)
@@ -81,10 +81,10 @@ describe('POST /posts/:id/comments', () => {
   describe('Given an non-existent post id payload', () => {
     it('Should return a 404 Not Found', async () => {
       const payload: z.infer<typeof createCommentSchema> = {
-        content: 'TestComment',
+        content: 'TestComment'
       }
       const res = await request(app)
-        .post(`/api/v1/posts/1000000/comments`)
+        .post('/api/v1/posts/1000000/comments')
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .send(payload)
@@ -106,7 +106,7 @@ describe('PATCH /comments/:id', () => {
         }
       })
       const payload: z.infer<typeof createCommentSchema> = {
-        content: 'TestCommentUpdated',
+        content: 'TestCommentUpdated'
       }
       const res = await request(app)
         .patch(`/api/v1/comments/${comment.id}`)
@@ -122,7 +122,7 @@ describe('PATCH /comments/:id', () => {
     it('Should return a 404 Not Found', async () => {
       const payload = {}
       const res = await request(app)
-        .patch(`/api/v1/comments/1000000`)
+        .patch('/api/v1/comments/1000000')
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .send(payload)
@@ -143,7 +143,7 @@ describe('PATCH /comments/:id', () => {
         data: {
           content: 'TestComment',
           authorId: user.id,
-          postId: post.id,
+          postId: post.id
         }
       })
       const res = await request(app)
@@ -164,7 +164,7 @@ describe('DELETE /comments/:id', () => {
         data: {
           content: '',
           authorId: author.id,
-          postId: dummyPost.id,
+          postId: dummyPost.id
         }
       })
       await request(app)
@@ -177,7 +177,7 @@ describe('DELETE /comments/:id', () => {
   describe('Given a non-existent id', () => {
     it('Should return a 404 Not Found', async () => {
       const res = await request(app)
-        .delete(`/api/v1/comments/1000000`)
+        .delete('/api/v1/comments/1000000')
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${token}`)
         .expect('Content-Type', /json/)
@@ -197,7 +197,7 @@ describe('DELETE /comments/:id', () => {
         data: {
           content: 'TestComment',
           authorId: user.id,
-          postId: post.id,
+          postId: post.id
         }
       })
       const res = await request(app)
