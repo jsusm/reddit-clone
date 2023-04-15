@@ -39,12 +39,20 @@ afterAll(async () => {
 describe('GET /posts/:id/comments', () => {
   describe('Guiven an existent id', () => {
     it('Should return a list of comments', async () => {
+      const comment = await prisma.comment.create({
+        data: {
+          authorId: author.id,
+          postId: dummyPost.id,
+          content: '',
+        }
+      })
       const res = await request(app)
         .get(`/api/v1/posts/${dummyPost.id}/comments`)
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
       expect(res.body instanceof Array).toBe(true)
+      expect(res.body[0]).toHaveProperty('id', comment.id)
     })
   })
 })

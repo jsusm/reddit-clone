@@ -9,6 +9,7 @@ import {
   findParamsSchema,
   updatePostSchema
 } from '../schemas/posts.schema'
+import { createCommentTree } from '../lib/commentTree'
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -32,20 +33,18 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     const post = await prisma.post.findUnique({
       where: {
         id: params.id
-      },
-      include: {
-        comments: {
-          orderBy: {
-            createdAt: 'desc'
-          }
-        }
+      }
+    })
+    const comments = await prisma.comment.findMany({
+      where: {
+        postId: params.id
       }
     })
     if (post == null) {
       res.status(404).json({ error: `Post with id: ${params.id} not found.` })
       return
     }
-    res.status(200).json(post)
+    res.status(200).json({ post, comments: createCommentTree(comments) })
   } catch (error) {
     next(error)
   }
@@ -59,7 +58,7 @@ router.get('/:id/comments', async (req: Request, res: Response, next: NextFuncti
         postId: params.id
       }
     })
-    res.status(200).json(comments)
+    res.status(200).json(createCommentTree(comments))
   } catch (error) {
     next(error)
   }
