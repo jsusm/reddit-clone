@@ -43,7 +43,7 @@ describe('GET /posts/:id/comments', () => {
         data: {
           authorId: author.id,
           postId: dummyPost.id,
-          content: '',
+          content: ''
         }
       })
       const res = await request(app)
