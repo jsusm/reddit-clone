@@ -47,3 +47,17 @@ npm run test
  - `/api/v1/posts/:id/comments` -> Reads and creates post's comments
  - `/api/v1/comments/:id` -> Deletes and updates post's comments
  - `/api/v1/comments/:id/reply` -> Creates a new reply
+
+### Build docker image
+The app need some env variables to run (see .env.example file) JWT_SECRET and DATABASE_URL are mandatory
+```bash
+# build
+docker build -t reddit-clone
+# run
+docker run -d \
+-p 4000:8080 \
+--add-host host.docker.internal:host-gateway \
+-e JWT_SECRET="some secret stuff" \
+-e DATABASE_URL="postgresql://jsus:randompassword@host.docker.internal:5432/reddit_clone?schema=public" \
+reddit-clone
+```
