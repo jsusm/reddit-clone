@@ -4,7 +4,7 @@ import express from 'express'
 import bcrypt from 'bcrypt'
 import * as jose from 'jose'
 import { signupSchema } from '../schemas/signup.schema'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { JWT_SECRET } from '../config'
 import { signinSchema } from '../schemas/signin.schema'
 
@@ -26,6 +26,14 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
 
     res.status(201).json({ token })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Unique constraint failed
+      // https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes
+      if (error.code === 'P2002') {
+        res.status(400).json({ error: 'Email already in use.' })
+        return
+      }
+    }
     next(error)
   }
 })

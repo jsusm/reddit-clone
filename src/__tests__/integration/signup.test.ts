@@ -46,4 +46,26 @@ describe('Singup route (/auth/signup)', () => {
       expect(res.body).toHaveProperty('token')
     })
   })
+  describe('Given an email that is already in use', () => {
+    it('Should return 400 Bad Request', async () => {
+      const user = await prisma.user.create({
+        data: {
+          email: "email_in_user@test.com",
+          password: "password",
+          name: 'testUser',
+        }
+      })
+      const payload: SingupSchema = {
+        name: 'testUser',
+        email: user.email,
+        password: 'randompassword'
+      }
+      const res = await request(app)
+        .post('/api/v1/auth/signup')
+        .send(payload)
+        .set('Accept', 'application/json')
+        .expect(400)
+      expect(res.body).toHaveProperty('error')
+    })
+  })
 })
