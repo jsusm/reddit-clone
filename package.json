@@ -14,7 +14,8 @@
     "lint:fix": "eslint --ext .ts src --fix",
     "docker:test-db-up": "docker compose up -d testdb",
     "docker:test-db-down": "docker compose stop testdb",
-    "test:integration": "npx dotenv-cli -e .env.test -- npx prisma migrate deploy && npx dotenv-cli -e .env.test -- jest -i"
+    "test:integration": "npx dotenv-cli -e .env.test -- npx prisma migrate deploy && npx dotenv-cli -e .env.test -- jest -i",
+    "test": "jest src/**/__tests__/* "
   },
   "keywords": [],
   "author": "",

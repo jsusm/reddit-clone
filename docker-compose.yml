@@ -3,6 +3,16 @@ version: '3.9'
 
 # The containers that compose the project
 services:
+  db:
+    image: postgres:14
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: jsus
+      POSTGRES_PASSWORD: randompassword
+      POSTGRES_DB: reddit_clone
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
   testdb:
     image: postgres:14
     restart: always
