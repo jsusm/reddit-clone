@@ -2,6 +2,8 @@
 In this project i want to replicate the basic reddit functionality
 ( create posts, and comment it and reply )
 
+The main goal of the project was to implement an authentication system using jwt, create crude operations for database models, create an API using REST constraints, return the appropriate error messages, and create tests to make sure everything works as expected.
+
 ### Technologies
  - Typescript ( swc for transpile )
  - express
@@ -44,3 +46,4 @@ npm run test
  - `/api/v1/posts` -> CRUD operations with posts
  - `/api/v1/posts/:id/comments` -> Reads and creates post's comments
  - `/api/v1/comments/:id` -> Deletes and updates post's comments
+ - `/api/v1/comments/:id/reply` -> Creates a new reply
