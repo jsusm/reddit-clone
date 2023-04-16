@@ -1,8 +1,8 @@
 # Reddit clone
 In this project i want to replicate the basic reddit functionality
-( create posts, and comment it and reply )
+( create posts, comment it, and reply )
 
-The main goal of the project was to implement an authentication system using jwt, create crude operations for database models, create an API using REST constraints, return the appropriate error messages, and create tests to make sure everything works as expected.
+The main goal of the project was to implement an authentication system using jwt, create crud operations for database models, create an API using REST constraints, return the appropriate error messages, and create tests to make sure everything works as expected.
 
 ### Technologies
  - Typescript ( swc for transpile )
@@ -26,7 +26,7 @@ npm run start
 ```
 
 ### Test the app
-Start the test database
+Start test database
 ```bash
 npm run docker:test-db-up
 # or
@@ -41,7 +41,7 @@ To run unit tests run
 npm run test
 ```
 ### Api schema
- - `/api/v1/auth/singup` -> Create an user and returns auth token
+ - `/api/v1/auth/singup` -> Creates an user and returns auth token
  - `/api/v1/auth/singin` -> returns auth token
  - `/api/v1/posts` -> CRUD operations with posts
  - `/api/v1/posts/:id/comments` -> Reads and creates post's comments
