@@ -218,3 +218,82 @@ describe('DELETE /comments/:id', () => {
     })
   })
 })
+
+describe('POST /comments/:id/reply', () => {
+  describe('Given a valid payload', () => {
+    it('Should return a 201 Created', async () => {
+      const payload: z.infer<typeof createCommentSchema> = {
+        content: 'Test Reply'
+      }
+      const comment = await prisma.comment.create({
+        data: {
+          postId: dummyPost.id,
+          content: '',
+          authorId: author.id
+        }
+      })
+      const res = await request(app)
+        .post(`/api/v1/comments/${comment.id}/reply`)
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload)
+        .expect('Content-Type', /json/)
+        .expect(201)
+      expect(res.body).toBeDefined()
+    })
+  })
+  describe('Given a non-existent comment', () => {
+    it('Should return a 404 Not Found', async () => {
+      const payload: z.infer<typeof createCommentSchema> = {
+        content: 'Test Reply'
+      }
+      const res = await request(app)
+        .post('/api/v1/comments/1000000/reply')
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload)
+        .expect('Content-Type', /json/)
+        .expect(404)
+      expect(res.body).toHaveProperty('error')
+    })
+  })
+  describe('Given an invalid payload', () => {
+    it('Should return a 400 Bad Request', async () => {
+      const payload = {}
+      const comment = await prisma.comment.create({
+        data: {
+          postId: dummyPost.id,
+          content: '',
+          authorId: author.id
+        }
+      })
+      const res = await request(app)
+        .post(`/api/v1/comments/${comment.id}/reply`)
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload)
+        .expect('Content-Type', /json/)
+        .expect(400)
+      expect(res.body).toHaveProperty('error')
+    })
+  })
+  describe('Given an no auth token', () => {
+    it('Should return a 401 Unauthorized', async () => {
+      const payload = {}
+      const comment = await prisma.comment.create({
+        data: {
+          postId: dummyPost.id,
+          content: '',
+          authorId: author.id
+        }
+      })
+      const res = await request(app)
+        .post(`/api/v1/comments/${comment.id}/reply`)
+        .set('Accept', 'application/json')
+        .send(payload)
+        .expect('Content-Type', /json/)
+        .expect(401)
+      expect(res.body).toHaveProperty('error')
+    })
+  })
+})

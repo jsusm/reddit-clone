@@ -43,7 +43,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
       where: {
         postId: params.id
       },
-      take: 10,
+      take: 10
     })
     if (post == null) {
       res.status(404).json({ error: `Post with id: ${params.id} not found.` })
