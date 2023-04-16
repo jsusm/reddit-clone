@@ -10,16 +10,20 @@ import {
   updatePostSchema
 } from '../schemas/posts.schema'
 import { createCommentTree } from '../lib/commentTree'
+import { paginationSchema } from '../schemas/pagination.schema'
 
 const router = express.Router()
 const prisma = new PrismaClient()
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const queryParams = paginationSchema.parse(req.query)
     const posts = await prisma.post.findMany({
       orderBy: {
         createdAt: 'desc'
-      }
+      },
+      take: queryParams.limit,
+      skip: queryParams.offset
     })
     res.status(200).json(posts)
   } catch (error) {
@@ -38,7 +42,8 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     const comments = await prisma.comment.findMany({
       where: {
         postId: params.id
-      }
+      },
+      take: 10
     })
     if (post == null) {
       res.status(404).json({ error: `Post with id: ${params.id} not found.` })
@@ -52,11 +57,14 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
 router.get('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const queryParams = paginationSchema.parse(req.query)
     const params = findParamsSchema.parse(req.params)
     const comments = await prisma.comment.findMany({
       where: {
         postId: params.id
-      }
+      },
+      take: queryParams.limit,
+      skip: queryParams.offset
     })
     res.status(200).json(createCommentTree(comments))
   } catch (error) {

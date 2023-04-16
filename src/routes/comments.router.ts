@@ -3,10 +3,48 @@ import { PrismaClient } from '@prisma/client'
 import type { NextFunction, Request, Response } from 'express'
 import express from 'express'
 import { isAuthenticated } from '../middlewares/isAuthenticated.middleware'
-import { findParamsSchema, updateCommentSchema } from '../schemas/comments.schema'
+import { createCommentSchema, findParamsSchema, updateCommentSchema } from '../schemas/comments.schema'
 
 const router = express.Router()
 const prisma = new PrismaClient()
+
+router.post(
+  '/:id/reply',
+  isAuthenticated,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = res.locals.userId
+    if (userId === undefined || typeof userId !== 'number') {
+      res.sendStatus(401)
+      return
+    }
+    try {
+      const params = findParamsSchema.parse(req.params)
+      const data = createCommentSchema.parse(req.body)
+      const parentComment = await prisma.comment.findUnique({
+        where: { id: params.id }
+      })
+      if (parentComment === null) {
+        res
+          .status(404)
+          .json({ error: `Comment with id ${params.id} doesn't exists` })
+        return
+      }
+      const reply = await prisma.comment.create({
+        data: {
+          content: data.content,
+          postId: parentComment.postId,
+          authorId: userId,
+          parentId: parentComment.id
+        }
+      })
+      res
+        .status(201)
+        .json(reply)
+    } catch (error) {
+      next(error)
+    }
+  }
+)
 
 router.patch(
   '/:id',
